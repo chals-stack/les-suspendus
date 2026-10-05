@@ -5,7 +5,7 @@ import {
   calculateRemainingBudget, 
   canAfford,
   formatFCFA 
-} from "./calculations.js";
+} from "./calculations.ts";
 
 const mockProblems = [
   { id: 1, title: "Prob 1", shortTitle: "P1", budget: 1_000_000, deadline: "48h" }
