@@ -1,0 +1,8 @@
+import { NextResponse } from "next/server";
+import { getNeonPool } from "@/lib/neon";
+function authorized(request: Request) { return !!process.env.ORGANIZER_PASSWORD && request.headers.get("x-organizer-password") === process.env.ORGANIZER_PASSWORD; }
+export async function POST(request: Request) {
+  if (!authorized(request)) return NextResponse.json({ error: "Mot de passe organisateur invalide" }, { status: 401 });
+  const purchase = await request.json(); const pool = getNeonPool(); const client = await pool.connect();
+  try { await client.query("begin"); const result = await client.query("select state from workshops where id=$1 for update", [process.env.WORKSHOP_ID || "atelier-principal"]); if (!result.rowCount) throw new Error("Atelier introuvable"); const state = result.rows[0].state; const team = state.teams.find((t: any) => t.id === purchase.teamId); const problem = state.problems.find((p: any) => p.id === team?.problemId); const spent = state.purchases.filter((p: any) => p.teamId === purchase.teamId && !p.cancelledAt).reduce((sum: number, p: any) => sum + p.amount, 0); if (!team || !problem || spent + purchase.amount > problem.budget) throw new Error("Budget insuffisant"); state.purchases.push(purchase); await client.query("update workshops set state=$2,updated_at=now() where id=$1", [process.env.WORKSHOP_ID || "atelier-principal", JSON.stringify(state)]); await client.query("commit"); return NextResponse.json(purchase); } catch (error) { await client.query("rollback"); return NextResponse.json({ error: error instanceof Error ? error.message : "Achat refusé" }, { status: 400 }); } finally { client.release(); }
+}

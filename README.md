@@ -1,5 +1,9 @@
 # L'Atelier — Mini-Entreprise Digitale
 
+## Boutique Les Suspendus
+
+L'application est organisée en quatre onglets : Dashboard public, Configuration, Équipes et Boutique. Les coûts sont calculés comme un pourcentage du budget du problème, arrondis à l'entier de FCFA. Les achats conservent le nom, le pourcentage et le montant au moment de l'achat ; une annulation recrédite automatiquement le budget. Le mode local utilise `localStorage`. En production, configurez Supabase et appliquez `supabase/schema.sql` ; la fonction `record_shop_purchase` fournit le verrou transactionnel côté serveur.
+
 Application web de pilotage en direct du challenge Mini-Entreprise Digitale. Elle centralise les équipes, les problèmes choisis, les budgets, les achats en boutique, les imprévus, les jokers et le journal de décisions.
 
 ## Fonctionnalités
@@ -25,6 +29,10 @@ pnpm dev
 ```
 
 Ouvrir ensuite `http://localhost:3000`.
+
+## Production avec Neon
+
+Créer une base Neon, exécuter `neon/schema.sql`, puis renseigner dans Vercel : `DATABASE_URL`, `ORGANIZER_PASSWORD` et éventuellement `WORKSHOP_ID`. `DATABASE_URL` reste exclusivement côté serveur. Le Dashboard est public ; les mutations demandent le mot de passe organisateur et les achats sont validés dans une transaction avec verrouillage de la ligne atelier. Le client interroge l'état toutes les 1,5 secondes pour refléter les achats des autres appareils.
 
 ## Activer Supabase
 

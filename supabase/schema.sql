@@ -102,6 +102,22 @@ begin
   end if;
 end $$;
 
+-- Mutations atomiques pour la boutique. L'application cliente peut les appeler
+-- via supabase.rpc afin que deux organisateurs ne dépensent jamais le même solde.
+create or replace function public.record_shop_purchase(target_workshop_id text, target_team_id text, purchase jsonb)
+returns jsonb language plpgsql security definer set search_path = public as $$
+declare current_state jsonb; total numeric; team_budget numeric; spent numeric;
+begin
+  if not public.is_workshop_member(target_workshop_id) then raise exception 'organisateur non autorisé'; end if;
+  select state into current_state from public.workshops where id = target_workshop_id for update;
+  total := (purchase->>'amount')::numeric;
+  team_budget := coalesce((select (p->>'budget')::numeric from jsonb_array_elements(current_state->'problems') p where (p->>'id')::int = (select (t->>'problemId')::int from jsonb_array_elements(current_state->'teams') t where t->>'id'=target_team_id)), 0);
+  spent := coalesce((select sum((p->>'amount')::numeric) from jsonb_array_elements(current_state->'purchases') p where p->>'teamId'=target_team_id and not (p ? 'cancelledAt')), 0);
+  if total < 0 or spent + total > team_budget then raise exception 'budget insuffisant'; end if;
+  update public.workshops set state = jsonb_set(current_state, '{purchases}', (current_state->'purchases') || jsonb_build_array(purchase), true), updated_at=now() where id=target_workshop_id;
+  return purchase;
+end; $$;
+
 -- Optionnel : les organisateurs peuvent créer plusieurs ateliers en changeant
 -- NEXT_PUBLIC_WORKSHOP_ID dans les variables d'environnement Vercel.
 
