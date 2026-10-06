@@ -208,6 +208,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 
 /* Boutique configuration */
 .config-section { padding: 22px; }
+.config-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .config-row { display: grid; grid-template-columns: 1fr auto auto auto; align-items: center; gap: 12px; padding: 15px 0; border-top: 1px solid var(--line); }
 .config-row b, .config-row small { display: block; }
 .config-row small { margin-top: 4px; color: var(--muted); font-size: .75rem; }
