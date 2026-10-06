@@ -20,6 +20,11 @@ export function getTeamBudget(team: Team, problems: Problem[]): number {
   return problems.find((problem) => problem.id === team.problemId)?.budget ?? 0;
 }
 
+export function getEffectiveTeamBudget(team: Team, state: GameState): number {
+  const reduction = Math.min(100, Math.max(0, state.budgetReductionPercent ?? 0));
+  return Math.round(getTeamBudget(team, state.problems) * (1 - reduction / 100));
+}
+
 export function calculateSpent(teamId: string, state: GameState): number {
   return state.purchases
     .filter((purchase) => purchase.teamId === teamId && !purchase.cancelledAt)
@@ -38,7 +43,7 @@ export function getTeamCeiling(team: Team, problems: Problem[]): number {
  * Budget restant = budget du problème moins la somme des achats.
  */
 export function calculateRemainingBudget(team: Team, state: GameState, problems: Problem[]): number {
-  const ceiling = getTeamCeiling(team, problems);
+  const ceiling = Math.round(getTeamCeiling(team, problems) * (1 - Math.min(100, Math.max(0, state.budgetReductionPercent ?? 0)) / 100));
   const spent = calculateSpent(team.id, state);
   
   return Math.max(0, ceiling - spent);
